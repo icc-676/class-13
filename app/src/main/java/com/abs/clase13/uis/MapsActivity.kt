@@ -22,6 +22,7 @@ class MapsActivity : AppCompatActivity() {
 
     private lateinit var mMap: GoogleMap
     private lateinit var locationData: LocationUtil
+    var coordinates = mutableListOf<LatLng>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +42,25 @@ class MapsActivity : AppCompatActivity() {
 
     private fun invokeLocationAction() {
         when {
-            isPermissionsGranted() -> println("Refreshing Location")
+            isPermissionsGranted() -> locationData.observe(this, Observer {
+                println("${it.latitude} , ${it.longitude}, speed: ${it.speed}")
+
+                val polylineOptions = PolylineOptions().clickable(false).color(R.color.colorAccent).geodesic(true)
+                    .width(10f)
+                coordinates.add(LatLng(it.latitude,it.longitude))
+                val start = LatLng(coordinates.first().latitude, coordinates.first().longitude)
+                polylineOptions.addAll(coordinates)
+                mMap.clear()
+                mMap.addMarker(MarkerOptions().position(start).title("Start"))
+                mMap.addPolyline(polylineOptions)
+                mMap.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom((
+                            LatLng(it.latitude,it.longitude)
+                            ), 20f)
+                )
+                speed_text_view.text = "Velocidad: ${it.speed}"
+
+            })
 
             shouldShowRequestPermissionRationale() -> println("Ask Permission")
 
